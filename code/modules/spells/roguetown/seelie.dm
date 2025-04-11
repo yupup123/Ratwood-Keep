@@ -228,7 +228,7 @@
 	)
 
 	var/tamed = FALSE
-	if(!targets.len || !istype(targets[1], /mob/living/simple_animal))
+	if(!targets.len || !istype(targets[1], /mob/living/simple_animal) || targets[1].stat == DEAD)
 		to_chat(user, span_warning("You must target a valid creature!"))
 		return FALSE
 

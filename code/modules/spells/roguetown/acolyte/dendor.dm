@@ -63,7 +63,7 @@
 		/mob/living/simple_animal/hostile/retaliate/rogue/saigabuck,
 	)
 
-	if(!targets.len || !istype(targets[1], /mob/living/simple_animal))
+	if(!targets.len || !istype(targets[1], /mob/living/simple_animal) || targets[1].stat == DEAD)
 		to_chat(user, span_warning("You must target a valid creature!"))
 		return FALSE
 
@@ -80,7 +80,7 @@
 	target.visible_message(span_warning("The [target.real_name]'s body is engulfed by a calming aura..."), runechat_message = TRUE)
 	// Kind of a hacky fix to make sure the ai doesn't attack people, but it works. 
 	target.faction = list("neutral")
-	target.tamed = TRUE
+	target.tame = TRUE
 	
 
 	// Poll for candidates to control the tamed animal
