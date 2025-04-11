@@ -46,9 +46,8 @@
 	invocation = "Be still and calm, brotherbeast."
 	invocation_type = "none" // can be none, whisper, emote, or shout
 	miracle = TRUE
-	// Making this cost 0 just for testing purposes
-	//devotion_cost = 80
-	devotion_cost = 0
+	devotion_cost = 30
+
 
 /obj/effect/proc_holder/spell/invoked/beasttame/cast(list/targets, mob/user = usr)
 	. = ..()
@@ -73,31 +72,41 @@
 		to_chat(user, span_warning("You cannot tame that!"))
 		return FALSE
 
+	if(target.tame)
+		to_chat(user, span_warning("This creature is already tamed!"))
+		return FALSE
+
 	else if(target.awakened)
 		to_chat(user, span_warning("This creature is awakened!"))
 		return FALSE
 
 	target.visible_message(span_warning("The [target.real_name]'s body is engulfed by a calming aura..."), runechat_message = TRUE)
-	// Kind of a hacky fix to make sure the ai doesn't attack people, but it works. 
-	target.faction = list("neutral")
+	target.faction = list("neutral") // Kind of a hacky fix to pacify, but it works. 
 	target.tame = TRUE
+	target.owner = user
 	
 
 	// Poll for candidates to control the tamed animal
-	var/list/candidates = pollCandidatesForMob("Do you want to play as an awakened [target.real_name]?", null, null, null, 100, target, POLL_IGNORE_TAMED_BEAST)
-
-	// If there are candidates, assign control to a player
-	if(LAZYLEN(candidates))
-		var/mob/C = pick(candidates)
-		target.awaken_beast(user, C.ckey)
-		target.visible_message(span_warning("The [target.real_name]'s eyes light up with intelligence as it awakens!"), runechat_message = TRUE)
-		target.awakened = TRUE
-		return TRUE
-	// If there are no candidates, the animal will have been calmed but not controlled
+	// Check if the druid already has two awakened beasts
+	if(user.mind.awakened_beasts >= user.mind.awakened_max)
+		to_chat(user, span_warning("I cannot sustain another self aware beast..."))
 	else
-		target.visible_message(span_warning("The [target.real_name] seems calmer but remains mindless."), runechat_message = TRUE)
-		
-		return TRUE
+		var/list/candidates = pollCandidatesForMob("Do you want to play as an awakened [target.real_name]?", null, null, null, 100, target, POLL_IGNORE_TAMED_BEAST)
+
+		// If there are candidates, assign control to a player
+		if(LAZYLEN(candidates))
+			var/mob/C = pick(candidates)
+			target.awaken_beast(user, C.ckey)
+			target.visible_message(span_warning("The [target.real_name]'s eyes light up with intelligence as it awakens!"), runechat_message = TRUE)
+			target.awakened = TRUE
+			// Add the tamed beast to the druid's list
+			user.mind.awakened_beasts += 1
+			return TRUE
+		// If there are no candidates, the animal will have been calmed but not controlled
+		else
+			target.visible_message(span_warning("The [target.real_name] seems calmer but remains mindless."), runechat_message = TRUE)
+			
+			return TRUE
 
 	return FALSE
 
@@ -105,10 +114,18 @@
 	if(ckey) // If a player is controlling the animal
 		src.ckey = ckey
 		to_chat(src, span_userdanger("I was once a creature of instinct, but now... completely new thoughts and ideas flood my mind! I can think! I am free!"))
-	if(ai_controller) // Disable AI controller if it exists
+	if(ai_controller) // Disable AI controller if it exists. This is to stop the AI from trying to control the animal.
 		ai_controller = new /datum/ai_controller/basic_controller(src)
 
 	return TRUE
+
+/mob/living/simple_animal/proc/handle_awakened_death()
+	var/mob/living/carbon/human/user = owner
+	user.mind.awakened_beasts -= 1
+	if(user.mind.awakened_beasts < 0)
+		user.mind.awakened_beasts = 0
+	to_chat(user, span_warning("I feel a disturbance in the wind. One of my awakened beasts has died."))
+
 
 /obj/effect/proc_holder/spell/targeted/conjure_vines
 	name = "Vine Sprout"

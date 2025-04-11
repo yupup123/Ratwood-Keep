@@ -54,6 +54,10 @@
 	var/boneboy = FALSE
 	var/bonenecro = null
 
+	//Druid Awaken Beast Trackers
+	var/awakened_beasts = 0
+	var/awakened_max = 2
+
 	var/linglink
 	var/datum/martial_art/martial_art
 	var/static/default_martial_art = new/datum/martial_art

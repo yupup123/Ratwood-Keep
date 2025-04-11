@@ -455,6 +455,9 @@ GLOBAL_VAR_INIT(farm_animals, FALSE)
 
 /mob/living/simple_animal/death(gibbed)
 	movement_type &= ~FLYING
+	if(awakened)
+		handle_awakened_death()
+
 	if(nest)
 		nest.spawned_mobs -= src
 		nest = null
